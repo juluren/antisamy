@@ -199,13 +199,13 @@ public class CssValidator {
             policy.getCommonRegularExpressions("cssIDSelector"),
             policy.getCommonRegularExpressions("cssIDExclusion"));
       case Condition.SAC_PSEUDO_CLASS_CONDITION:
-        // this is a basic psuedo element condition; compare condition
+        // this is a basic pseudo-element condition; compare condition
         // against valid pattern and is not blacklisted by exclusion pattern
 
         return validateCondition(
             (AttributeCondition) condition,
             policy.getCommonRegularExpressions("cssPseudoElementSelector"),
-            policy.getCommonRegularExpressions("cssPsuedoElementExclusion"));
+            policy.getCommonRegularExpressions("cssPseudoElementExclusion"));
       case Condition.SAC_BEGIN_HYPHEN_ATTRIBUTE_CONDITION:
       case Condition.SAC_ONE_OF_ATTRIBUTE_CONDITION:
       case Condition.SAC_ATTRIBUTE_CONDITION:
@@ -361,10 +361,40 @@ public class CssValidator {
         return "inherit";
       case LexicalUnit.SAC_OPERATOR_COMMA:
         return ",";
+      case LexicalUnit.SAC_FUNCTION:
+        StringBuilder builder = new StringBuilder();
+
+        // Append the function name, e.g., "var"
+        builder.append(lu.getFunctionName()).append("(");
+
+        LexicalUnit params = lu.getParameters();
+        while (params != null) {
+          String paramsValue = lexicalValueToString(params);
+          if (paramsValue == null) {
+            return null;
+          }
+          builder.append(paramsValue);
+          params = params.getNextLexicalUnit();
+          if (params != null) {
+            builder.append(", ");
+          }
+        }
+
+        // Check for fallback (some functions like "var" have fallback values)
+        LexicalUnit fallback = lu.getPreviousLexicalUnit();
+        if (fallback != null) {
+          String fallbackValue = lexicalValueToString(fallback);
+          if (fallbackValue == null) {
+            return null;
+          }
+          builder.append(", ").append(fallbackValue);
+        }
+
+        builder.append(")");
+        return builder.toString();
       case LexicalUnit.SAC_ATTR:
       case LexicalUnit.SAC_COUNTER_FUNCTION:
       case LexicalUnit.SAC_COUNTERS_FUNCTION:
-      case LexicalUnit.SAC_FUNCTION:
       case LexicalUnit.SAC_RECT_FUNCTION:
       case LexicalUnit.SAC_SUB_EXPRESSION:
       case LexicalUnit.SAC_UNICODERANGE:
